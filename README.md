@@ -3,7 +3,7 @@
 真机点检收成平台：用例库、执行结果、测试报告。断言写进每条用例，报告出 JSON / HTML / JUnit。
 
 仓库：https://github.com/toviaz/kuaiji-auto-platform  
-介绍页：https://toviaz.github.io/kuaiji-auto-platform/
+介绍页：https://toviaz.github.io/kuaiji-auto-platform/（和赛博算命一样挂 GitHub Pages）
 
 来源：[每日点检](https://wvixbzgc0u7.feishu.cn/wiki/EFdgwGeyBi4kDqkOIolcbg8bnOc)
 
