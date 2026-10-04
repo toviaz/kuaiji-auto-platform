@@ -1,0 +1,27 @@
+app_name: 快记点检
+package: com.android.soundrecorder
+main_activity: com.android.soundrecorder/.feature.main.StepOSRecorderActivity
+rename_to: KJ06A
+ocr_bin: ~/Desktop/adb-scripts/ocr
+output_dir: ~/Desktop/kuaiji-auto-platform/data/runs
+source: https://wvixbzgc0u7.feishu.cn/wiki/EFdgwGeyBi4kDqkOIolcbg8bnOc
+coords:
+  pause: [420, 2420]
+  finish: [750, 2420]
+  record_fallback: [599, 2418]
+suites:
+  smoke:
+    name: 快记每日点检
+    cases:
+      - KJ-01
+      - KJ-02
+      - KJ-03
+      - KJ-04
+      - KJ-05
+      - KJ-06
+      - KJ-07
+      - KJ-08
+      - KJ-09
+      - KJ-10
+      - KJ-11
+      - KJ-12

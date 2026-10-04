@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>用例详情 · 快记自动化测试平台</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <h1><a href="/">快记自动化测试平台</a></h1>
+      <div class="sub">用例详情</div>
+    </div>
+    <div class="muted" id="header-meta"></div>
+  </div>
+  <nav id="site-nav"></nav>
+</header>
+<main>
+  <div class="crumb"><a href="/cases">用例</a> / <span id="crumb">…</span></div>
+  <div class="card" id="box">加载中…</div>
+</main>
+<script src="/static/app.js"></script>
+<script>
+header("cases");
+const cid = location.pathname.split("/").pop();
+api("/api/cases/" + cid).then(c => {
+  document.title = `${c.cid} · 用例`;
+  document.getElementById("crumb").textContent = c.cid;
+  header("cases", c.title);
+  document.getElementById("box").innerHTML = `
+    <h2>${c.cid} ${c.title}</h2>
+    <p>${pill(c.mode)} ${pill(c.priority)} <span class="muted">${c.module} · ${c.suite}</span></p>
+    <p class="muted">${c.note || ""}</p>
+    <h2>步骤</h2>
+    <ol>${c.steps.map(s => `<li>${s}</li>`).join("")}</ol>
+    <h2 style="margin-top:16px">断言点</h2>
+    <ul>${c.asserts.map(s => `<li>${s}</li>`).join("")}</ul>
+    <h2 style="margin-top:16px">历史结果</h2>
+    ${c.history.length ? `<table><thead><tr><th>Run</th><th>时间</th><th>状态</th><th>说明</th></tr></thead><tbody>${
+      c.history.map(h => `<tr class="clickable" onclick="go('/report/${h.run_id}')">
+        <td><a href="/report/${h.run_id}">${h.run_id}</a></td>
+        <td>${h.started_at||""}</td><td>${pill(h.status)}</td><td>${h.detail||""}</td></tr>`).join("")
+    }</tbody></table>` : `<div class="empty">还没有这条的执行记录</div>`}
+    <p style="margin-top:16px"><a href="/cases">返回用例列表</a></p>`;
+}).catch(() => {
+  document.getElementById("box").innerHTML = `<div class="empty">没有这条用例。<a href="/cases">回列表</a></div>`;
+});
+</script>
+</body>
+</html>

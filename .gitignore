@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+*.log
+.env
+.env.*
+data/runs/*
+!data/runs/sample_assert/
+data/platform/
+.DS_Store

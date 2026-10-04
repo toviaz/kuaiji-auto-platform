@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>账号 · 快记自动化测试平台</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <h1><a href="/">快记自动化测试平台</a></h1>
+      <div class="sub">账号</div>
+    </div>
+    <div class="muted" id="header-meta"></div>
+  </div>
+  <nav id="site-nav"></nav>
+</header>
+<main>
+  <div class="card" id="box">加载中…</div>
+</main>
+<script src="/static/app.js"></script>
+<script>
+header("account");
+api("/api/auth/me").then(d => {
+  const u = d.user;
+  if (!u) { location.href = "/login?next=/account"; return; }
+  header("account", u.name);
+  document.getElementById("box").innerHTML = `
+    <h2>${u.name}</h2>
+    <p class="muted">${u.source === "feishu" ? "飞书登录" : "本机账号"}</p>
+    <table>
+      <tr><th>显示名</th><td>${u.name}</td></tr>
+      <tr><th>账号</th><td>${u.username || "-"}</td></tr>
+      <tr><th>邮箱</th><td>${u.email || "-"}</td></tr>
+      <tr><th>角色</th><td>${u.role_label || (u.is_admin ? "管理员" : "普通账号")}</td></tr>
+      <tr><th>状态</th><td>${u.status === "pending" ? "待审核" : "已通过"}</td></tr>
+      <tr><th>登录方式</th><td>${u.source === "feishu" ? "飞书" : "本机账号"}</td></tr>
+    </table>
+    <p style="margin-top:16px"><button class="btn ghost" id="out" type="button">退出登录</button></p>`;
+  document.getElementById("out").onclick = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    location.href = "/login";
+  };
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 · 快记自动化测试平台</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<main class="login-wrap">
+  <div class="card login-card">
+    <h1>快记自动化测试平台</h1>
+    <p class="muted">登录后查看用例、结果和报告</p>
+    <p id="err" class="err"></p>
+    <label>账号 <input id="username" autocomplete="username" placeholder="公司邮箱前缀"></label>
+    <label>密码 <input id="password" type="password" autocomplete="current-password"></label>
+    <button class="btn" id="login" type="button">登录</button>
+    <div class="or"><span>或</span></div>
+    <a class="btn feishu" href="/auth/feishu">飞书登录</a>
+    <button class="btn ghost" id="local-feishu" type="button">用本机已有飞书授权</button>
+    <p class="login-foot">还没有账号？<a href="/register">立即注册</a></p>
+  </div>
+</main>
+<script>
+const q = new URLSearchParams(location.search);
+const next = q.get("next") || "/";
+const err = q.get("err");
+if (err) document.getElementById("err").textContent = err;
+
+fetch("/api/auth/me").then(r => r.json()).then(d => {
+  if (d.user) location.replace(next);
+});
+
+async function post(url, body) {
+  const r = await fetch(url, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(body) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.detail || d.error || r.statusText);
+  return d;
+}
+function body() {
+  return {
+    username: document.getElementById("username").value,
+    password: document.getElementById("password").value,
+  };
+}
+document.getElementById("login").onclick = async () => {
+  try { await post("/api/auth/login", body()); location.href = next; }
+  catch (e) { document.getElementById("err").textContent = e.message; }
+};
+document.getElementById("password").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("login").click();
+});
+document.getElementById("local-feishu").onclick = async () => {
+  try { await post("/api/auth/feishu/local", {}); location.href = next; }
+  catch (e) { document.getElementById("err").textContent = e.message + "。也可点上面的飞书登录。"; }
+};
+</script>
+</body>
+</html>

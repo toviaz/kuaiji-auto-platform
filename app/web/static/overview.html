@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>概览 · 快记自动化测试平台</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <h1><a href="/">快记自动化测试平台</a></h1>
+      <div class="sub">概览</div>
+    </div>
+    <div class="muted" id="header-meta"></div>
+  </div>
+  <nav id="site-nav"></nav>
+</header>
+<main>
+  <div class="cards" id="cards"></div>
+  <div class="card">
+    <h2>最近执行 <a class="muted" href="/results">全部结果 →</a></h2>
+    <div id="runs" class="empty">加载中…</div>
+  </div>
+</main>
+<script src="/static/app.js"></script>
+<script>
+header("overview");
+api("/api/overview").then(ov => {
+  header("overview", `${ov.name} · ${ov.suite} · ${ov.cases_total} 条用例`);
+  document.getElementById("cards").innerHTML = [
+    [`<a href="/cases">用例总数</a>`, ov.cases_total],
+    [`<a href="/cases">自动</a>`, ov.auto],
+    [`<a href="/cases">人工</a>`, ov.manual],
+    [`<a href="/results">执行次数</a>`, ov.runs_total],
+    [`<a href="/report">最近通过率</a>`, (ov.pass_rate || 0) + "%"],
+  ].map(([k,n]) => `<div class="stat"><div class="k">${k}</div><div class="n">${n}</div></div>`).join("");
+  if (!ov.recent.length) {
+    document.getElementById("runs").innerHTML = `<div class="empty">还没有执行记录</div>`;
+    return;
+  }
+  document.getElementById("runs").innerHTML = `<table><thead><tr><th>Run</th><th>时间</th><th>设备</th><th>结果</th><th>通过率</th></tr></thead><tbody>${
+    ov.recent.map(r => `<tr class="clickable" onclick="go('/report/${r.run_id}')">
+      <td><a href="/report/${r.run_id}">${r.run_id}</a></td>
+      <td>${r.started_at}</td><td>${r.serial||"-"}</td>
+      <td>${pills(r.summary)}</td><td>${r.pass_rate}%</td></tr>`).join("")
+  }</tbody></table>`;
+}).catch(e => { document.getElementById("header-meta").textContent = "加载失败"; });
+</script>
+</body>
+</html>

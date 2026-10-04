@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>报告 · 快记自动化测试平台</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <h1><a href="/">快记自动化测试平台</a></h1>
+      <div class="sub">测试报告</div>
+    </div>
+    <div class="muted" id="header-meta"></div>
+  </div>
+  <nav id="site-nav"></nav>
+</header>
+<main>
+  <div class="crumb"><a href="/results">执行结果</a> / <span id="crumb">报告</span></div>
+  <div class="row">
+    <select id="run-id"></select>
+    <select id="status">
+      <option value="">全部用例</option>
+      <option>PASS</option>
+      <option>FAIL</option>
+      <option>SKIP</option>
+      <option>MANUAL</option>
+    </select>
+    <span id="links" class="muted"></span>
+  </div>
+  <div class="cards" id="summary"></div>
+  <div class="card" style="margin-bottom:14px">
+    <h2>用例结果</h2>
+    <div id="cases"></div>
+  </div>
+  <div class="card">
+    <h2>HTML 报告</h2>
+    <div id="frame"></div>
+  </div>
+</main>
+<script src="/static/app.js"></script>
+<script>
+header("report");
+let DATA = null;
+let RUNS = [];
+
+function render() {
+  if (!DATA) return;
+  const s = DATA.summary || {};
+  document.getElementById("summary").innerHTML = [
+    ["PASS", s.PASS||0], ["FAIL", s.FAIL||0], ["SKIP", s.SKIP||0], ["MANUAL", s.MANUAL||0],
+    ["设备", DATA.serial||"-"]
+  ].map(([k,n]) => `<div class="stat"><div class="k">${k}</div><div class="n" style="font-size:18px">${n}</div></div>`).join("");
+  document.getElementById("links").innerHTML = `
+    <a href="/runs/${DATA.run_id}/report.html" target="_blank">HTML</a>
+    · <a href="/runs/${DATA.run_id}/report.json" target="_blank">JSON</a>
+    · <a href="/runs/${DATA.run_id}/junit.xml" target="_blank">JUnit</a>
+    · ${DATA.aios||""} · APK ${DATA.apk||"-"}`;
+  const st = document.getElementById("status").value;
+  const rows = (DATA.results||[]).filter(c => !st || c.status === st);
+  document.getElementById("cases").innerHTML = `<table><thead><tr><th>状态</th><th>编号</th><th>标题</th><th>说明</th><th>断言</th><th>耗时</th></tr></thead><tbody>${
+    rows.map(c => `<tr>
+      <td>${pill(c.status)}</td>
+      <td><a href="/cases/${c.cid}">${c.cid}</a></td>
+      <td>${c.title}</td><td>${c.detail||""}</td>
+      <td>${(c.assertions||[]).map(a => `${a.passed?"✓":"✗"} ${a.name}`).join("<br>")||"-"}</td>
+      <td>${c.elapsed_ms}ms</td>
+    </tr>`).join("")
+  }</tbody></table>`;
+  document.getElementById("frame").innerHTML = `<iframe src="/runs/${DATA.run_id}/report.html"></iframe>`;
+}
+
+async function load(id) {
+  DATA = await api("/api/runs/" + id);
+  document.title = `${id} · 报告`;
+  document.getElementById("crumb").textContent = id;
+  header("report", `${DATA.serial || ""} · APK ${DATA.apk || "-"}`);
+  document.getElementById("run-id").value = id;
+  if (location.pathname !== "/report/" + id) history.replaceState(null, "", "/report/" + id);
+  render();
+}
+
+api("/api/runs").then(async d => {
+  RUNS = d.runs || [];
+  if (!RUNS.length) {
+    document.getElementById("cases").innerHTML = `<div class="empty">还没有报告。<a href="/results">回执行结果</a></div>`;
+    return;
+  }
+  document.getElementById("run-id").innerHTML = RUNS.map(r => `<option value="${r.run_id}">${r.run_id}</option>`).join("");
+  const parts = location.pathname.split("/").filter(Boolean);
+  const fromPath = parts[0] === "report" && parts[1] ? parts[1] : "";
+  const id = fromPath && RUNS.some(r => r.run_id === fromPath) ? fromPath : RUNS[0].run_id;
+  document.getElementById("run-id").onchange = () => go("/report/" + document.getElementById("run-id").value);
+  document.getElementById("status").onchange = render;
+  await load(id);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>执行结果 · 快记自动化测试平台</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <h1><a href="/">快记自动化测试平台</a></h1>
+      <div class="sub">执行结果</div>
+    </div>
+    <div class="muted" id="header-meta"></div>
+  </div>
+  <nav id="site-nav"></nav>
+</header>
+<main>
+  <div class="row">
+    <select id="filter">
+      <option value="">全部结果</option>
+      <option value="fail">仅有失败</option>
+      <option value="pass">无失败</option>
+    </select>
+    <input id="q" placeholder="搜 run / 设备 / APK">
+  </div>
+  <div class="card">
+    <h2>执行结果列表</h2>
+    <div id="table"></div>
+  </div>
+</main>
+<script src="/static/app.js"></script>
+<script>
+header("results");
+let RUNS = [];
+function render() {
+  const f = document.getElementById("filter").value;
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const rows = RUNS.filter(r => {
+    const fail = (r.summary && r.summary.FAIL) || 0;
+    if (f === "fail" && !fail) return false;
+    if (f === "pass" && fail) return false;
+    const hay = `${r.run_id} ${r.serial} ${r.apk}`.toLowerCase();
+    return !q || hay.includes(q);
+  });
+  document.getElementById("table").innerHTML = rows.length ? `<table><thead><tr>
+    <th>Run</th><th>开始</th><th>结束</th><th>设备</th><th>APK</th><th>条数</th><th>结果</th><th>通过率</th>
+  </tr></thead><tbody>${rows.map(r => `<tr class="clickable" onclick="go('/report/${r.run_id}')">
+    <td><a href="/report/${r.run_id}">${r.run_id}</a></td>
+    <td>${r.started_at}</td><td>${r.ended_at||"-"}</td>
+    <td>${r.serial||"-"}</td><td>${r.apk||"-"}</td><td>${r.total}</td>
+    <td>${pills(r.summary)}</td><td>${r.pass_rate}%</td>
+  </tr>`).join("")}</tbody></table>` : `<div class="empty">没有匹配的执行记录</div>`;
+}
+api("/api/runs").then(d => {
+  RUNS = d.runs || [];
+  header("results", `${RUNS.length} 次执行`);
+  render();
+});
+document.getElementById("filter").onchange = render;
+document.getElementById("q").oninput = render;
+</script>
+</body>
+</html>

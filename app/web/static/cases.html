@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>用例 · 快记自动化测试平台</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <h1><a href="/">快记自动化测试平台</a></h1>
+      <div class="sub">用例库</div>
+    </div>
+    <div class="muted" id="header-meta"></div>
+  </div>
+  <nav id="site-nav"></nav>
+</header>
+<main>
+  <div class="row">
+    <input id="q" placeholder="搜编号 / 标题 / 模块" style="min-width:240px">
+    <select id="module"><option value="">全部模块</option></select>
+    <select id="mode"><option value="">全部执行方式</option><option>AUTO</option><option>MANUAL</option></select>
+    <select id="pri"><option value="">全部优先级</option><option>P0</option><option>P1</option><option>P2</option></select>
+  </div>
+  <div class="card">
+    <h2>用例 <span class="muted" id="count"></span></h2>
+    <div id="table"></div>
+  </div>
+</main>
+<script src="/static/app.js"></script>
+<script>
+header("cases");
+let CASES = [];
+function rows() {
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const mod = document.getElementById("module").value;
+  const mode = document.getElementById("mode").value;
+  const pri = document.getElementById("pri").value;
+  return CASES.filter(c => {
+    const hay = `${c.cid} ${c.title} ${c.module}`.toLowerCase();
+    return (!q || hay.includes(q)) && (!mod || c.module === mod) && (!mode || c.mode === mode) && (!pri || c.priority === pri);
+  });
+}
+function render() {
+  const list = rows();
+  document.getElementById("count").textContent = `${list.length} / ${CASES.length}`;
+  document.getElementById("table").innerHTML = `<table><thead><tr>
+    <th>编号</th><th>标题</th><th>模块</th><th>方式</th><th>优先级</th><th>最近结果</th>
+  </tr></thead><tbody>${list.map(c => `<tr class="clickable" onclick="go('/cases/${c.cid}')">
+    <td><a href="/cases/${c.cid}">${c.cid}</a></td>
+    <td>${c.title}</td><td>${c.module}</td>
+    <td>${pill(c.mode)}</td><td>${pill(c.priority)}</td>
+    <td>${c.last_status ? `<a href="/report/${c.last_run}">${pill(c.last_status)}</a>` : '<span class="muted">未跑</span>'}</td>
+  </tr>`).join("")}</tbody></table>`;
+}
+api("/api/cases").then(d => {
+  CASES = d.cases || [];
+  header("cases", `${CASES.length} 条`);
+  const mods = [...new Set(CASES.map(c => c.module))];
+  document.getElementById("module").innerHTML = `<option value="">全部模块</option>` + mods.map(m => `<option>${m}</option>`).join("");
+  render();
+});
+["q","module","mode","pri"].forEach(id => document.getElementById(id).oninput = document.getElementById(id).onchange = render);
+</script>
+</body>
+</html>

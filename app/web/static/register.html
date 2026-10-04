@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>注册 · 快记自动化测试平台</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<main class="login-wrap">
+  <div class="card login-card">
+    <h1>注册账号</h1>
+    <p class="muted">用公司邮箱前缀当账号。注册成功后直接登录。</p>
+    <p id="err" class="err"></p>
+    <p id="ok" class="ok"></p>
+    <div id="form">
+      <label>账号 <input id="username" autocomplete="username" placeholder="公司邮箱前缀，不要带 @ 后面"></label>
+      <label>密码 <input id="password" type="password" autocomplete="new-password"></label>
+      <label>显示名 <input id="name" placeholder="可选"></label>
+      <button class="btn" id="reg" type="button">注册</button>
+    </div>
+    <p class="login-foot">已有账号？<a href="/login">去登录</a></p>
+  </div>
+</main>
+<script>
+fetch("/api/auth/me").then(r => r.json()).then(d => {
+  if (d.user) location.replace("/");
+});
+
+document.getElementById("reg").onclick = async () => {
+  const err = document.getElementById("err");
+  const ok = document.getElementById("ok");
+  err.textContent = "";
+  ok.textContent = "";
+  const r = await fetch("/api/auth/register", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      username: document.getElementById("username").value,
+      password: document.getElementById("password").value,
+      name: document.getElementById("name").value,
+    }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    err.textContent = d.detail || d.error || r.statusText;
+    return;
+  }
+  location.href = "/";
+};
+</script>
+</body>
+</html>
